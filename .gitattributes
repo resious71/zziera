@@ -12,3 +12,8 @@
 *.jpg binary
 *.gif binary
 *.webp binary
+
+# 릴리스 zip(git archive)에는 넣지 않는 파일: README 스크린샷과 git 설정
+/screenshots   export-ignore
+.gitattributes export-ignore
+.gitignore     export-ignore

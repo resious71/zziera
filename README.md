@@ -4,6 +4,13 @@
 > Plain PHP 8.1+ and SQLite on Windows + XAMPP. No framework, no Composer, no CDN. UI and docs are in Korean.
 > Licensed under the MIT License.
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4.svg)
+![SQLite](https://img.shields.io/badge/DB-SQLite-003b57.svg)
+[![Release](https://img.shields.io/github/v/release/resious71/zziera)](https://github.com/resious71/zziera/releases/latest)
+
+![ZZieRa 찌라시 목록](screenshots/02-list.png)
+
 사내망용 익명 "찌라시" 게시판입니다. 관리자가 등록한 사용자만 로그인해 찌라시를 보고 올립니다. 매일 07:00(KST)에 전날 글의 요약을 메일링 멤버에게 보냅니다.
 
 - 작성자는 저장하지 않습니다. 로그인 ID, IP, 세션도 찌라시와 연결하지 않습니다.
@@ -11,6 +18,36 @@
 - 본문 이미지와 첨부파일은 등록 한 달(30일) 뒤 자동으로 삭제됩니다(`config.php`의 `FILE_RETENTION_DAYS`). 글, 표, 링크, 댓글, 추천 수는 계속 남습니다.
 - 글마다 추천(한 사람 한 번, 다시 누르면 취소)과 댓글(글당 답글 포함 20개, 답글은 남의 댓글에 한 단계만)이 있습니다. 댓글에는 감정별 이모티콘(97개)을 넣을 수 있고, 댓글마다 이모티콘으로 공감(한 사람당 하나, 바꾸기·취소 가능)할 수 있습니다. 작성자·추천한 사람은 저장·표시하지 않습니다(사용자 ID 대신 `data/app.key`로 만든 해시만 저장).
 - 사용 방법은 화면 하단의 **이용 안내**와 관리 탭의 **관리자 가이드**에 있습니다.
+
+## 주요 기능
+
+| 영역 | 내용 |
+| --- | --- |
+| 찌라시 등록 | 위지윅 편집기(굵게·제목·목록·인용·표·링크·이미지), 첨부파일, 붙여넣은 주소 자동 링크, 서버 측 HTML 정화 |
+| 찌라시 보기 | 날짜별 목록·검색·필터, 상단 고정, 본문 요약(TextRank), 상세 화면의 이전/다음 글 이동 |
+| 반응 | 추천, 댓글·한 단계 답글, 감정별 이모티콘 97개, 댓글 이모티콘 공감(모두 작성자 비저장) |
+| 메일 | 매일 07:00 요약 메일(SMTP, 50명씩 숨은 참조), 수동 발송, 발송 이력, 테스트 메일 |
+| 관리 | 글 삭제·복구, 멤버·사용자 계정, 관리자 비밀번호, 메일 설정, 감사 로그, 뉴스 스크랩(구글 뉴스 RSS), 정리 |
+| 운영 | 작업 스케줄러 배치(발송·정리·스크랩), 백업 스크립트, `install_check.php` 설치 점검 |
+
+## 화면
+
+| 찌라시 상세(이전/다음 글) | 댓글과 이모티콘 공감 |
+| --- | --- |
+| ![찌라시 상세](screenshots/03-detail.png) | ![댓글과 이모티콘 공감](screenshots/04-comments.png) |
+| **찌라시 등록(위지윅 편집기)** | **관리 탭** |
+| ![찌라시 등록](screenshots/05-write.png) | ![관리 탭](screenshots/06-admin.png) |
+| **로그인** | **휴대폰 화면** |
+| ![로그인](screenshots/01-login.png) | <img src="screenshots/07-mobile.png" alt="휴대폰 화면" width="260"> |
+
+> 화면의 글·댓글은 모두 예시용으로 만든 가상의 데이터입니다.
+
+## 빠른 시작
+
+1. [최신 릴리스](https://github.com/resious71/zziera/releases/latest)에서 `ZZieRa-<버전>.zip`을 받아 `C:\xampp\htdocs\`에 풉니다.
+2. `config.php`의 `BASE_URL`을 서버 주소로 바꾸고 `http://서버주소/ZZieRa/`를 엽니다(DB는 자동 생성).
+3. **관리자 로그인**에 오늘 날짜(`yyyymmdd`)를 넣고, **사용자 계정**에서 관리자 비밀번호를 바꾼 뒤 사용자를 등록합니다.
+4. 메일 설정과 작업 스케줄러 등록은 아래 [2. 설치](#2-설치)부터 차례로 따라 하세요.
 
 ## 1. 준비물
 
