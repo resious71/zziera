@@ -1,4 +1,4 @@
-# ZZieRa 찌라시 쭉림
+# ZZieRa 찌라시 공유 웹
 
 > An anonymous internal bulletin board ("찌라시") for small intranets, with a daily summarized e-mail digest.
 > Plain PHP 8.1+ and SQLite on Windows + XAMPP. No framework, no Composer, no CDN. UI and docs are in Korean.
