@@ -1,0 +1,14 @@
+# 줄바꿈 정규화. 배치 파일은 cmd 가 한글 rem 줄을 바르게 읽도록 항상 CRLF 로 체크아웃한다.
+* text=auto
+*.bat text eol=crlf
+*.php text eol=lf
+*.js  text eol=lf
+*.css text eol=lf
+*.md  text eol=lf
+
+# 이진 파일
+*.png binary
+*.ico binary
+*.jpg binary
+*.gif binary
+*.webp binary

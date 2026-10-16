@@ -1,0 +1,82 @@
+/*
+ * 본문 공통 스타일 — 에디터(contenteditable)와 상세·미리보기 화면이 똑같이 사용한다.
+ * WYSIWYG 보장: 여기 규칙만으로 본문 모양이 정해지도록 하고, 에디터 전용 장식은 editor.css 에 둔다.
+ */
+.zz-content {
+    font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #1f2933;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+}
+.zz-content > :first-child { margin-top: 0; }
+.zz-content > :last-child { margin-bottom: 0; }
+
+.zz-content p { margin: 0 0 .75em; }
+.zz-content h2 { font-size: 1.35em; line-height: 1.4; margin: 1.2em 0 .5em; font-weight: 700; }
+.zz-content h3 { font-size: 1.15em; line-height: 1.4; margin: 1em 0 .4em; font-weight: 700; }
+/* 에디터(브라우저 편집 명령)는 b·i 를 만들고 서버는 strong·em 으로 바꾼다 — 같은 모양이어야 한다 */
+.zz-content strong, .zz-content b { font-weight: 700; }
+.zz-content em, .zz-content i { font-style: italic; }
+.zz-content u { text-decoration: underline; }
+
+.zz-content ul, .zz-content ol { margin: 0 0 .75em; padding-left: 1.6em; }
+.zz-content li { margin: .15em 0; }
+.zz-content li > ul, .zz-content li > ol { margin: .15em 0; }
+.zz-content ul { list-style: disc; }
+.zz-content ul ul { list-style: circle; }
+.zz-content ol { list-style: decimal; }
+
+.zz-content blockquote {
+    margin: 0 0 .75em;
+    padding: .4em 1em;
+    border-left: 4px solid #cbd2d9;
+    background: #f5f7fa;
+    color: #3e4c59;
+}
+.zz-content blockquote > :last-child { margin-bottom: 0; }
+
+.zz-content hr { border: 0; border-top: 1px solid #cbd2d9; margin: 1.25em 0; }
+
+.zz-content a { color: #2f5bea; text-decoration: underline; }
+
+.zz-content img {
+    max-width: 100%;
+    height: auto;
+    vertical-align: bottom;
+    border-radius: 4px;
+}
+
+/* 표: 상세 화면은 .zz-table-wrap 이 가로 스크롤을 맡는다 */
+.zz-content table { border-collapse: collapse; margin: 0 0 .75em; }
+.zz-content th, .zz-content td {
+    border: 1px solid #9aa5b1;
+    padding: 6px 10px;
+    min-width: 5em;
+    vertical-align: top;
+    text-align: left;
+    /* 본문의 anywhere 줄바꿈을 그대로 받으면 좁은 화면에서 칸이 한 글자 폭까지 줄어든다 */
+    overflow-wrap: break-word;
+    word-break: keep-all;
+}
+.zz-content th { background: #eef2f7; font-weight: 700; }
+.zz-content .zz-table-wrap { overflow-x: auto; margin: 0 0 .75em; }
+.zz-content .zz-table-wrap > table { margin: 0; }
+
+/* 3일이 지나 삭제된 본문 이미지 자리 */
+.zz-content .zz-img-expired {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 200px;
+    min-height: 90px;
+    max-width: 100%;
+    padding: 12px 16px;
+    border: 1px dashed #9aa5b1;
+    border-radius: 4px;
+    background: #f5f7fa;
+    color: #616e7c;
+    font-size: .9em;
+    vertical-align: bottom;
+}

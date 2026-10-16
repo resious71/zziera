@@ -1,0 +1,132 @@
+/*
+ * 에디터 전용 장식(도구 모음, 편집 영역 틀, 대화 상자, 미리보기 틀).
+ * 본문 글자·표·이미지의 모양은 content.css(.zz-content)에서만 정한다 — 상세 화면과 같아야 하므로.
+ */
+.zz-editor {
+    border: 1px solid #cbd2d9;
+    border-radius: 8px;
+    background: #fff;
+}
+.zz-editor:focus-within { border-color: #2f5bea; box-shadow: 0 0 0 2px rgba(47, 91, 234, .15); }
+
+/* 도구 모음: 좁은 화면에서는 줄바꿈되어 모든 버튼이 보인다 */
+.zz-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e4e7eb;
+    background: #f8fafc;
+    border-radius: 8px 8px 0 0;
+    position: sticky;
+    top: 57px; /* 사이트 헤더 아래에 붙는다 */
+    z-index: 5;
+}
+.zz-tool-group { display: flex; flex-wrap: wrap; gap: 2px; }
+.zz-tool-group + .zz-tool-group { padding-left: 10px; border-left: 1px solid #e4e7eb; }
+.zz-toolbar button {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    font: inherit;
+    font-size: .9em;
+    color: #1f2933;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.zz-toolbar button:hover:not(:disabled) { background: #e4e7eb; }
+.zz-toolbar button:focus-visible { outline: 2px solid #2f5bea; outline-offset: 0; }
+.zz-toolbar button[aria-pressed="true"] { background: #dbe4ff; border-color: #a5b8f5; color: #2246c4; }
+.zz-toolbar button:disabled { color: #9aa5b1; cursor: default; }
+.zz-table-tools button:not(:disabled) { color: #2246c4; }
+
+/* 편집 영역: 본문 모양은 .zz-content 가 정하고, 여기서는 틀만 정한다 */
+.zz-editor-area {
+    min-height: 260px;
+    max-height: 70vh;
+    overflow: auto;
+    padding: 14px 16px;
+    outline: none;
+}
+.zz-editor-area.is-empty::before {
+    content: attr(data-placeholder);
+    color: #9aa5b1;
+    pointer-events: none;
+    position: absolute;
+}
+.zz-editor-area table td:focus-within, .zz-editor-area table th:focus-within { outline: 2px solid #a5b8f5; outline-offset: -2px; }
+.zz-editor-area .zz-current-cell { background: #f0f4ff; }
+.zz-editor-area img.zz-uploading { opacity: .5; }
+.zz-editor-area.is-dragover { background: #f0f4ff; box-shadow: inset 0 0 0 2px #a5b8f5; }
+
+.zz-editor-status {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 10px;
+    border-top: 1px solid #e4e7eb;
+    font-size: .85em;
+    color: #616e7c;
+    background: #f8fafc;
+    border-radius: 0 0 8px 8px;
+}
+.zz-count.over, .zz-upload-status.error { color: #c53030; font-weight: 700; }
+.zz-editor-notice { min-height: 1.2em; margin-top: 4px; font-size: .9em; color: #b7791f; }
+
+/* 대화 상자(링크·표) */
+.zz-dialog {
+    border: 1px solid #cbd2d9;
+    border-radius: 10px;
+    padding: 20px;
+    width: min(420px, calc(100vw - 32px));
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+}
+.zz-dialog::backdrop { background: rgba(15, 23, 42, .35); }
+.zz-dialog h2 { margin: 0 0 14px; font-size: 1.1rem; }
+.zz-dialog label { display: block; margin-bottom: 10px; font-weight: 700; }
+.zz-dialog label.check { display: inline-flex; font-weight: 400; }
+.zz-dialog input[type=url], .zz-dialog input[type=text], .zz-dialog input[type=number] { margin-top: 4px; font-weight: 400; }
+.zz-dialog input[type=number] {
+    width: 100%; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 8px; font: inherit;
+}
+.zz-dialog-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.zz-dialog-hint { margin: 6px 0 0; font-size: .85em; color: #616e7c; }
+.zz-dialog-error { min-height: 1.2em; margin: 6px 0 0; color: #c53030; font-weight: 700; font-size: .9em; }
+.zz-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* 미리보기 */
+.preview-panel {
+    margin-top: 16px;
+    padding: 20px;
+    background: #fff;
+    border: 2px dashed #a5b8f5;
+    border-radius: 10px;
+}
+.preview-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.preview-head h2 { margin: 0; font-size: 1rem; }
+.preview-head small { font-weight: 400; color: #616e7c; }
+.preview-errors { margin: 0 0 12px; padding-left: 20px; color: #c53030; font-weight: 700; }
+.preview-errors:empty { display: none; }
+
+@media (max-width: 640px) {
+    .zz-toolbar { top: 0; position: static; gap: 4px 6px; }
+    .zz-tool-group + .zz-tool-group { padding-left: 6px; }
+    .zz-toolbar button { height: 36px; min-width: 36px; }
+    .zz-editor-area { min-height: 220px; padding: 12px; }
+}
+
+/* 편집 영역 안의 보조 표시(서버로 보내지 않는다) */
+.zz-editor-area { position: relative; }
+.zz-editor-area .zz-upload-ph {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px dashed #a5b8f5;
+    border-radius: 4px;
+    background: #f0f4ff;
+    color: #2246c4;
+    font-size: .9em;
+    user-select: none;
+}

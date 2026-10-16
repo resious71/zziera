@@ -1,0 +1,31 @@
+# ── 운영 데이터(절대 커밋하지 않음) ──────────────────────
+# DB, 암호화 키(app.key), 세션, 잠금, 임시 파일, 로그
+data/*
+!data/.htaccess
+!data/index.html
+
+# 업로드 파일(본문 이미지·첨부)
+storage/uploads/*
+!storage/uploads/.htaccess
+!storage/uploads/index.html
+
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log
+*.lock
+
+# ── 개발 도구·로컬 메모 ─────────────────────────────────
+.claude/
+prompts/
+CLAUDE.md
+PRD.md
+docs/
+
+# ── 편집기·OS ─────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store

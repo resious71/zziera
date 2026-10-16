@@ -1,0 +1,7 @@
+# 웹 접근 차단 + 업로드 파일의 스크립트 실행 차단(이중 방어)
+Require all denied
+Options -ExecCGI -Indexes
+RemoveHandler .php .phtml .phar .php3 .php4 .php5 .php7 .php8 .pht .cgi .pl .py
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

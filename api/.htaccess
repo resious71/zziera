@@ -1,0 +1,2 @@
+# api 폴더 목록 보기 차단(엔드포인트 .php 는 공개)
+Options -Indexes
