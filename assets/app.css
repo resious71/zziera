@@ -285,6 +285,8 @@ textarea { resize: vertical; min-height: 180px; }
 .admin-field .label { display: block; font-weight: 700; margin-bottom: 4px; }
 .admin-field small { display: block; margin-top: 3px; }
 .admin-field select { padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 8px; font: inherit; background: #fff; width: 100%; }
+.admin-field .retention-input select { width: auto; }
+.admin-field .retention-input input { width: 6em; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 8px; font: inherit; }
 .send-preview { margin-top: 12px; }
 .send-preview .admin-table td:last-child { min-width: 200px; }
 .pin-mark { margin-right: 4px; }

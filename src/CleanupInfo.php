@@ -14,6 +14,7 @@ final class CleanupInfo
         'expired_images'      => '만료 이미지',
         'expired_attachments' => '만료 첨부',
         'temp_images'         => '임시 이미지',
+        'expired_posts'       => '보관 기간 지난 찌라시',
         'purged_posts'        => '완전 삭제된 찌라시',
         'purged_files'        => '삭제된 파일',
         'temp_store'          => '임시 파일',
@@ -69,10 +70,13 @@ final class CleanupInfo
     public static function retention(): array
     {
         return [
+            'post_days'    => Retention::postRetentionDays(),
+            'post_text'    => Retention::postRetentionText(),
             'file_days'    => Retention::fileRetentionDays(),
             'file_text'    => Retention::fileRetentionText(),
             'deleted_days' => max(1, Config::int('DELETED_RETENTION_DAYS', 3)),
             'temp_hours'   => Cleanup::TEMP_IMAGE_HOURS,
+            'max_days'     => Retention::MAX_DAYS,
         ];
     }
 }
