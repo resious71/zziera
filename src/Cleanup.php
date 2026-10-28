@@ -2,11 +2,12 @@
 /**
  * 정리 배치 (PRD 9.2) — cli/cron_cleanup.php 가 매일 한 번 실행한다.
  *
- *  1. 등록 후 FILE_RETENTION_DAYS(기본 30일, Retention::fileRetentionDays) 지난 본문 이미지·첨부: 디스크 파일만 지우고 레코드는 남긴다(file_deleted_at 기록).
+ *  1. 등록 후 이미지·첨부 보관 기간(Retention::fileRetentionDays, 기본 180일) 지난 본문 이미지·첨부: 디스크 파일만 지우고 레코드는 남긴다(file_deleted_at 기록).
  *     본문 HTML 은 그대로 두며 출력할 때 "이미지가 만료되었습니다"/"첨부가 만료되었습니다"로 바뀐다.
  *  2. 등록되지 않은 임시 이미지(zzira_id NULL): 업로드 1일 후 파일과 레코드를 함께 삭제.
  *  3. 관리자 삭제 후 DELETED_RETENTION_DAYS(3일) 지난 찌라시: Retention::purgePostChildren(발송 이력 항목·댓글·추천·이미지·첨부) → 본 레코드 순으로
  *     한 트랜잭션에서 완전 삭제하고, 커밋한 뒤 남은 파일을 지운다(트랜잭션이 실패하면 파일은 남는다).
+ *  3b. 등록 후 찌라시 보관 기간(Retention::postRetentionDays, 기본 180일) 지난 찌라시(상단 고정 글 제외): 3과 같은 방법으로 완전 삭제.
  *  4. 만료된 TempStore 파일(레이트 리미팅·로그인 잠금), running 으로 남은 발송 기록.
  *
  * 기준 시각은 Time::now()(--force-now 로 바꿀 수 있음). TempStore 만료는 실제 시각 기준이다.
@@ -25,7 +26,8 @@ final class Cleanup
         $fileCut = self::ago(Retention::fileRetentionDays() . ' days');
         $tempCut = self::ago(self::TEMP_IMAGE_HOURS . ' hours');
         $deletedCut = self::ago(max(1, Config::int('DELETED_RETENTION_DAYS', 3)) . ' days');
-        $r = ['expired_images' => 0, 'expired_attachments' => 0, 'temp_images' => 0, 'purged_posts' => 0,
+        $postCut = self::ago(Retention::postRetentionDays() . ' days');
+        $r = ['expired_images' => 0, 'expired_attachments' => 0, 'temp_images' => 0, 'expired_posts' => 0, 'purged_posts' => 0,
               'purged_files' => 0, 'temp_store' => 0, 'stale_sends' => 0, 'file_errors' => 0, 'scrap_records' => 0];
 
         // 1. 보관 기간이 지난 파일(레코드 유지)
@@ -62,26 +64,21 @@ final class Cleanup
         // 3. 삭제 후 보관 기간이 지난 찌라시 완전 삭제
         $posts = Db::all("SELECT id, title FROM zzira WHERE status = 'deleted' AND deleted_at IS NOT NULL AND deleted_at <= ?", [$deletedCut]);
         foreach ($posts as $post) {
-            $id = (int) $post['id'];
             $r['purged_posts']++;
-            if ($dryRun) {
-                $r['purged_files'] += (int) Db::value('SELECT (SELECT COUNT(*) FROM zzira_images WHERE zzira_id = ? AND file_deleted_at IS NULL) + (SELECT COUNT(*) FROM zzira_attachments WHERE zzira_id = ? AND file_deleted_at IS NULL)', [$id, $id]);
-                continue;
+            self::purgePost((int) $post['id'], "status = 'deleted'", $dryRun, $r);
+            if (!$dryRun) {
+                Audit::log('post_purge', 'zzira', (int) $post['id'], '삭제 후 보관 기간이 지나 완전 삭제: ' . mb_substr((string) $post['title'], 0, 80));
             }
-            // 하위 레코드(발송 이력 항목·댓글·추천·이미지·첨부)는 Retention::purgePostChildren 이 외래 키 순서로 지운다(5d)
-            $files = Db::transaction(static function (PDO $pdo) use ($id): array {
-                $files = Retention::purgePostChildren($pdo, $id);
-                Db::exec("DELETE FROM zzira WHERE id = ? AND status = 'deleted'", [$id]);
-                return $files;
-            });
-            foreach ($files as $path) {
-                if (Upload::remove($path)) {
-                    $r['purged_files']++;
-                } else {
-                    $r['file_errors']++;
-                }
-            }
-            Audit::log('post_purge', 'zzira', $id, '삭제 후 보관 기간이 지나 완전 삭제: ' . mb_substr((string) $post['title'], 0, 80));
+        }
+
+        // 3b. 찌라시 보관 기간이 지난 글 완전 삭제(상단 고정 글은 고정을 풀 때까지 남긴다). 건수가 많을 수 있어 감사 로그는 한 줄로 남긴다.
+        $expired = Db::all("SELECT id FROM zzira WHERE status = 'active' AND is_pinned = 0 AND created_at <= ?", [$postCut]);
+        foreach ($expired as $post) {
+            $r['expired_posts']++;
+            self::purgePost((int) $post['id'], "status = 'active' AND is_pinned = 0", $dryRun, $r);
+        }
+        if (!$dryRun && $r['expired_posts'] > 0) {
+            Audit::log('post_expire', 'zzira', null, '보관 기간 ' . Retention::postRetentionText() . '이 지난 찌라시 ' . $r['expired_posts'] . '건 완전 삭제');
         }
 
         // 4. 임시 파일·중단된 발송(dry-run 이면 건수만 센다)
@@ -93,12 +90,39 @@ final class Cleanup
         return $r;
     }
 
+    /**
+     * 글 하나 완전 삭제: 하위 레코드(발송 이력 항목·댓글·추천·이미지·첨부)는 Retention::purgePostChildren 이 외래 키 순서로 지운다(5d).
+     * $guard: 고른 뒤 그사이 복구·고정되었으면 건드리지 않도록 트랜잭션 안에서 다시 확인하는 조건(고정 SQL, 사용자 입력 아님).
+     */
+    private static function purgePost(int $id, string $guard, bool $dryRun, array &$r): void
+    {
+        if ($dryRun) {
+            $r['purged_files'] += (int) Db::value('SELECT (SELECT COUNT(*) FROM zzira_images WHERE zzira_id = ? AND file_deleted_at IS NULL) + (SELECT COUNT(*) FROM zzira_attachments WHERE zzira_id = ? AND file_deleted_at IS NULL)', [$id, $id]);
+            return;
+        }
+        $files = Db::transaction(static function (PDO $pdo) use ($id, $guard): array {
+            if (Db::value("SELECT COUNT(*) FROM zzira WHERE id = ? AND {$guard}", [$id]) == 0) {
+                return [];
+            }
+            $files = Retention::purgePostChildren($pdo, $id);
+            Db::exec("DELETE FROM zzira WHERE id = ? AND {$guard}", [$id]);
+            return $files;
+        });
+        foreach ($files as $path) {
+            if (Upload::remove($path)) {
+                $r['purged_files']++;
+            } else {
+                $r['file_errors']++;
+            }
+        }
+    }
+
     /** 한 줄 요약(표준 출력·감사 로그 공용) */
     public static function summary(array $r): string
     {
         return sprintf(
-            '만료 이미지 %d · 만료 첨부 %d · 임시 이미지 %d · 완전 삭제 글 %d(파일 %d) · 임시 저장 %d · 중단 발송 %d · 파일 오류 %d · 스크랩 기록 %d',
-            $r['expired_images'], $r['expired_attachments'], $r['temp_images'], $r['purged_posts'],
+            '만료 이미지 %d · 만료 첨부 %d · 임시 이미지 %d · 보관 기간 지난 글 %d · 완전 삭제 글 %d(파일 %d) · 임시 저장 %d · 중단 발송 %d · 파일 오류 %d · 스크랩 기록 %d',
+            $r['expired_images'], $r['expired_attachments'], $r['temp_images'], $r['expired_posts'] ?? 0, $r['purged_posts'],
             $r['purged_files'], $r['temp_store'], $r['stale_sends'], $r['file_errors'], $r['scrap_records'] ?? 0
         );
     }

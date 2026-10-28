@@ -990,6 +990,53 @@
         }), '');
     }
 
+    /** 보관 기간 입력(숫자 + 일/개월/년). 값은 일수로 저장한다(1개월 = 30일, 1년 = 365일) */
+    var RETENTION_UNITS = [[365, '년'], [30, '개월'], [1, '일']];
+    function retentionField(label, days, note) {
+        var unitDays = RETENTION_UNITS.filter(function (u) { return days % u[0] === 0; })[0][0];
+        var num = el('input', { type: 'number', min: '1', step: '1', inputmode: 'numeric', 'aria-label': label + ' 숫자' });
+        num.value = String(days / unitDays);
+        var unit = el('select', { 'aria-label': label + ' 단위' }, RETENTION_UNITS.map(function (u) { return el('option', { value: String(u[0]), text: u[1] }); }));
+        unit.value = String(unitDays);
+        return {
+            node: el('label', { className: 'admin-field' }, [el('span', { className: 'label', text: label }), el('span', { className: 'retention-input' }, [num, ' ', unit]), el('small', { className: 'muted', text: note })]),
+            days: function () { var n = Number(num.value); return Number.isInteger(n) && n > 0 ? n * Number(unit.value) : NaN; }
+        };
+    }
+
+    function retentionForm(r) {
+        var post = retentionField('찌라시 보관 기간', r.post_days, '등록 후 이 기간이 지난 글은 댓글·추천·파일까지 완전히 삭제됩니다(복구 불가). 상단 고정 글은 고정을 풀 때까지 남습니다.');
+        var file = retentionField('이미지·첨부 보관 기간', r.file_days, '등록 후 이 기간이 지난 본문 이미지·첨부파일만 지우고 글은 남깁니다.');
+        var msg = el('p', { className: 'form-message', role: 'alert' });
+        var form = el('form', { className: 'admin-card admin-form', novalidate: true }, [
+            el('h3', { text: '보관 기간 설정' }),
+            post.node,
+            file.node,
+            el('p', { className: 'muted small', text: '1일부터 최대 3년(' + r.max_days + '일)까지 정할 수 있습니다. 1개월은 30일, 1년은 365일로 계산합니다. 기본값은 6개월(180일)이며, 바꾼 값은 다음 정리(매일 03:00 또는 "지금 정리")부터 적용됩니다.' }),
+            el('div', { className: 'admin-card-actions' }, [el('button', { type: 'submit', className: 'zz-btn', text: '저장' })]),
+            msg
+        ]);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var pd = post.days(), fd = file.days();
+            if (!(pd >= 1 && pd <= r.max_days) || !(fd >= 1 && fd <= r.max_days)) {
+                msg.textContent = '보관 기간은 1일부터 3년(' + r.max_days + '일)까지 입력하세요.';
+                msg.className = 'form-message error';
+                return;
+            }
+            var go = function () {
+                api('api/admin_retention_save.php', { post_days: String(pd), file_days: String(fd) }).then(function (res) {
+                    if (!res.ok) { msg.textContent = res.error; msg.className = 'form-message error'; return; }
+                    message(res.message, 'ok');
+                    showView('cleanup');
+                }).catch(ignoreAuth);
+            };
+            if (pd < r.post_days) confirmBox('찌라시 보관 기간을 ' + r.post_days + '일에서 ' + pd + '일로 줄일까요?', '다음 정리 때 등록 후 ' + pd + '일이 지난 글이 모두 완전히 삭제되며 복구할 수 없습니다. 먼저 "삭제 대상 확인"으로 건수를 확인할 수 있습니다.', '저장').then(function (yes) { if (yes) go(); });
+            else go();
+        });
+        return form;
+    }
+
     function viewCleanup(root) {
         var box = el('div', { className: 'muted', text: '불러오는 중…' });
         root.appendChild(box);
@@ -1012,6 +1059,7 @@
             box.appendChild(el('section', { className: 'admin-card' }, [
                 el('h3', { text: '정리 대상과 보관 기간' }),
                 el('ul', { className: 'cleanup-rules' }, [
+                    el('li', { text: '등록 후 ' + r.post_text + '이 지난 찌라시: 본문·댓글·추천·이미지·첨부까지 완전히 지웁니다(복구 불가, 상단 고정 글은 제외).' }),
                     el('li', { text: '등록 후 ' + r.file_text + '이 지난 본문 이미지·첨부파일: 파일만 지우고 글은 남깁니다("이미지가 만료되었습니다"로 표시).' }),
                     el('li', { text: '삭제 후 ' + r.deleted_days + '일이 지난 찌라시: 본문·댓글·추천·이미지·첨부까지 완전히 지웁니다(복구 불가).' }),
                     el('li', { text: '등록되지 않은 임시 이미지(' + (r.temp_hours / 24) + '일 지난 것), 만료된 임시 파일(등록 제한·잠금 기록), 중단된 발송 기록' }),
@@ -1020,6 +1068,7 @@
                 el('p', { className: 'muted small', text: '정리는 매일 03:00 작업 스케줄러가 자동으로 실행하므로 보통은 직접 실행할 필요가 없습니다. 여기서 실행해도 같은 처리를 합니다(명령줄 cron_cleanup.php 와 동일).' }),
                 last
             ]));
+            box.appendChild(retentionForm(r));
 
             var previewBtn = el('button', { type: 'button', className: 'zz-btn', text: '삭제 대상 확인', disabled: d.running });
             var runBtn = el('button', { type: 'button', className: 'zz-btn', text: '지금 정리', disabled: true, title: '먼저 삭제 대상 확인을 눌러 주세요' });

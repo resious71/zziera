@@ -154,7 +154,7 @@ if (is_dir(UPLOAD_DIR)) {
     }
 }
 addCheck($sections, $sec, 'storage/uploads/ 용량', CHECK_PASS,
-    Upload::formatBytes($uploadBytes) . " (파일 {$uploadFiles}개) · 이미지·첨부 보관 기간 " . Retention::fileRetentionDays() . '일(FILE_RETENTION_DAYS), 삭제 글 복구 기간 ' . Config::int('DELETED_RETENTION_DAYS', 3) . '일',
+    Upload::formatBytes($uploadBytes) . " (파일 {$uploadFiles}개) · 찌라시 보관 기간 " . Retention::postRetentionDays() . '일, 이미지·첨부 보관 기간 ' . Retention::fileRetentionDays() . '일(관리 탭 "정리"에서 변경), 삭제 글 복구 기간 ' . Config::int('DELETED_RETENTION_DAYS', 3) . '일',
     '');
 try {
     $mismatch = Counters::mismatches();

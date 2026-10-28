@@ -125,7 +125,7 @@ header('Cache-Control: no-store');
     <!-- ── 찌라시 등록 ─────────────────────────────── -->
     <section class="panel" id="panel-write" role="tabpanel" aria-labelledby="tab-write" hidden>
         <div class="notice">
-            이름·이메일·IP 등 등록자를 알 수 있는 정보는 저장되지 않습니다. 등록 즉시 공개되며, 본문 이미지와 첨부파일은 등록 <?= Html::e(Retention::fileRetentionText()) ?> 후 삭제됩니다.
+            이름·이메일·IP 등 등록자를 알 수 있는 정보는 저장되지 않습니다. 등록 즉시 공개되며, 찌라시는 등록 <?= Html::e(Retention::postRetentionText()) ?>, 본문 이미지와 첨부파일은 등록 <?= Html::e(Retention::fileRetentionText()) ?> 후 삭제됩니다.
         </div>
         <form id="write-form" class="write-form" novalidate>
             <input type="hidden" name="csrf_token" value="<?= Html::e($csrf) ?>">
